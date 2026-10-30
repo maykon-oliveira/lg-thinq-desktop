@@ -17,8 +17,13 @@ O LG ThinQ Desktop é um app de desktop (Windows, macOS e Linux) que liga e desl
 - Trocar o modo (frio, seco, ventilar, auto, quente, conforme o seu modelo)
 - Trocar a velocidade da ventilação
 - Alternar entre aparelhos, se você tiver mais de um
+- Em **Ajustes**:
+  - Ligar e desligar a oscilação vertical e a horizontal, o modo econômico, a purificação e a luz do painel
+  - Programar o modo dormir, ligar ou desligar em algumas horas ou num horário fixo
+  - Ver a qualidade do ar, a umidade e a vida útil do filtro
+  - Ajustar a faixa de temperatura do modo auto
 
-Os modos e velocidades que aparecem vêm do próprio aparelho, então a tela se adapta ao seu modelo.
+Os modos, velocidades e ajustes que aparecem vêm do próprio aparelho, então a tela se adapta ao seu modelo. O que estiver ativo (timer, oscilação, filtro precisando de limpeza) aparece em destaque logo abaixo dos controles.
 
 ## Antes de começar
 
@@ -55,7 +60,7 @@ Outros comandos:
 
 | Comando | O que faz |
 | --- | --- |
-| `npm run dev` | Abre o app com o DevTools |
+| `npm run dev` | Abre o app com o DevTools e salva o profile e o estado de cada aparelho em `debug/`, na pasta de dados do app |
 | `npm test` | Roda os testes |
 | `npm run dist` | Gera o instalador do Windows em `dist/` |
 

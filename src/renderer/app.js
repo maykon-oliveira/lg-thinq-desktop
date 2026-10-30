@@ -30,6 +30,24 @@ const FANS = {
   MID_HIGH: 'Médio+', HIGH: 'Alto', POWER: 'Turbo', HIGH_POWER: 'Turbo', AUTO: 'Auto', NATURE: 'Natural',
 };
 
+const LIGHT = { ON: 'Ligada', OFF: 'Desligada', true: 'Ligada', false: 'Desligada' };
+const LEVELS = {
+  GOOD: 'Bom', NORMAL: 'Normal', BAD: 'Ruim', VERY_BAD: 'Muito ruim',
+  WEAK: 'Fraco', STRONG: 'Forte', VERY_STRONG: 'Muito forte', INVALID: '--',
+};
+const AIR_LABELS = { total: 'Qualidade do ar', pm25: 'PM2,5', pm10: 'PM10', pm1: 'PM1', humidity: 'Umidade', odor: 'Odor' };
+
+// Timers mostrados na folha Ajustes. `when: 'on'` só com o ar ligado; `'off'` só desligado.
+const TIMERS = [
+  { feature: 'sleepTimer', label: 'Dormir', active: 'Dormir até', when: 'on', kind: 'relative' },
+  { feature: 'timerStop', label: 'Desligar em', active: 'Desliga às', when: 'on', kind: 'relative' },
+  { feature: 'alarmStop', label: 'Desligar às', active: 'Desliga às', when: 'on', kind: 'absolute' },
+  { feature: 'timerStart', label: 'Ligar em', active: 'Liga às', when: 'off', kind: 'relative' },
+  { feature: 'alarmStart', label: 'Ligar às', active: 'Liga às', when: 'off', kind: 'absolute' },
+];
+const TIMER_STEPS = [30, 60, 120, 240, 360, 480];
+const FILTER_WARN = 10;
+
 const POLL_MS = 30000;
 const TEMP_DEBOUNCE_MS = 700;
 
@@ -49,6 +67,14 @@ const S = {
 
 const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ','));
 const titleCase = (s) => s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, ' ');
+const pad = (n) => String(n).padStart(2, '0');
+const duration = (min) => (min < 60 ? `${min} min` : `${fmt(min / 60)} h`);
+
+// Horário daqui a `min` minutos, para mostrar "desliga às 23:40".
+function clockIn(min) {
+  const d = new Date(Date.now() + min * 60000);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function setStatus(text, isError = false) {
   const el = $('status');
@@ -185,6 +211,300 @@ function render() {
   }
 
   drawDial();
+  renderChips();
+  renderExtras();
+}
+
+/* ---------- recursos extras ---------- */
+
+const extras = () => S.ac?.extras || {};
+const xcaps = () => S.caps?.extras || {};
+
+function timerText(t, value) {
+  return `${t.active} ${t.kind === 'relative' ? clockIn(value) : value}`;
+}
+
+// Linha na tela principal com o que está ativo ou pede atenção.
+function renderChips() {
+  const e = extras();
+  const list = [];
+  for (const t of TIMERS) if (e[t.feature] != null) list.push([timerText(t, e[t.feature])]);
+  if (e.swingV || e.swingH) list.push(['Oscilando']);
+  if (e.powerSave) list.push(['Econômico']);
+  if (e.airClean) list.push(['Purificando']);
+  if (e.filter && e.filter.percent <= FILTER_WARN) list.push([`Filtro ${e.filter.percent}%`, 'warn']);
+
+  const box = $('chips');
+  box.replaceChildren(
+    ...list.map(([text, cls]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `chip${cls ? ` ${cls}` : ''}`;
+      b.textContent = text;
+      b.title = 'Abrir ajustes';
+      return b;
+    }),
+  );
+  box.hidden = list.length === 0;
+}
+
+// Monta a folha Ajustes para o aparelho atual (uma vez por aparelho).
+function buildExtras() {
+  const x = xcaps();
+  $('open-extras').hidden = !x.any;
+  if (!x.any) closeExtras();
+
+  $('x-air').hidden = !x.filter && !(x.air?.length > 0);
+  $('x-wind').hidden = !x.swingV && !x.swingH;
+  $('x-options').hidden = !x.powerSave && !x.airClean && !(x.light?.length > 0);
+  for (const b of $('extras').querySelectorAll('.toggle')) b.hidden = !x[b.dataset.feature];
+
+  const light = $('x-light');
+  light.querySelector('.options')?.remove();
+  light.hidden = !(x.light?.length > 0);
+  if (!light.hidden) {
+    const wrap = document.createElement('div');
+    wrap.className = 'options';
+    for (const v of x.light) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.value = String(v);
+      b.textContent = LIGHT[v] || titleCase(String(v));
+      wrap.appendChild(b);
+    }
+    light.appendChild(wrap);
+  }
+
+  for (const row of $('x-twoset').querySelectorAll('.range-row')) row.hidden = !x.twoSet?.[row.dataset.side];
+
+  const list = $('x-timer-list');
+  list.replaceChildren();
+  const timers = TIMERS.filter((t) => x[t.feature]);
+  $('x-timers').hidden = timers.length === 0;
+  for (const t of timers) {
+    const row = document.createElement('div');
+    row.className = 'timer-row';
+    row.dataset.feature = t.feature;
+    const label = document.createElement('p');
+    label.className = 'timer-label';
+    label.textContent = t.label;
+
+    const pick = document.createElement('div');
+    pick.className = 'timer-pick';
+    if (t.kind === 'relative') {
+      for (const m of TIMER_STEPS) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.minutes = m;
+        b.textContent = duration(m);
+        pick.appendChild(b);
+      }
+    } else {
+      const input = document.createElement('input');
+      input.type = 'time';
+      input.required = true;
+      input.setAttribute('aria-label', t.label);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.alarm = '';
+      b.textContent = 'Definir';
+      pick.append(input, b);
+    }
+
+    const active = document.createElement('div');
+    active.className = 'timer-active';
+    const text = document.createElement('span');
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'link';
+    cancel.dataset.cancel = '';
+    cancel.textContent = 'Cancelar';
+    // Timer absoluto só cancela se o profile permitir.
+    cancel.hidden = t.kind === 'absolute' && !x.cancel?.[t.feature];
+    active.append(text, cancel);
+
+    row.append(label, pick, active);
+    list.appendChild(row);
+  }
+}
+
+function renderExtras() {
+  if ($('extras').hidden || !S.ac) return;
+  const x = xcaps();
+  const e = extras();
+  const on = S.ac.power;
+
+  for (const b of $('extras').querySelectorAll('.toggle')) {
+    b.setAttribute('aria-pressed', String(!!e[b.dataset.feature]));
+    b.disabled = !on;
+  }
+  for (const b of $('x-light').querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(b.dataset.value === String(e.light)));
+    b.disabled = !on;
+  }
+
+  renderStats(e);
+
+  const two = e.twoSet;
+  $('x-twoset').hidden = !x.twoSet || !two?.enabled;
+  for (const row of $('x-twoset').querySelectorAll('.range-row')) {
+    const side = row.dataset.side;
+    const v = two?.[side];
+    const r = x.twoSet?.[side];
+    row.querySelector('output').textContent = typeof v === 'number' ? `${fmt(v)}°` : '--';
+    const [down, up] = row.querySelectorAll('button');
+    down.disabled = !on || typeof v !== 'number' || v <= r?.min;
+    up.disabled = !on || typeof v !== 'number' || v >= r?.max;
+  }
+
+  let visible = 0;
+  for (const row of $('x-timer-list').children) {
+    const t = TIMERS.find((tt) => tt.feature === row.dataset.feature);
+    row.hidden = (t.when === 'on') !== on;
+    if (!row.hidden) visible++;
+    const value = e[t.feature];
+    const isActive = value != null;
+    row.querySelector('.timer-pick').hidden = isActive;
+    row.querySelector('.timer-active').hidden = !isActive;
+    if (isActive) row.querySelector('.timer-active span').textContent = timerText(t, value);
+  }
+  const note = $('x-timer-note');
+  note.hidden = visible > 0;
+  note.textContent = on ? 'Desligue o ar para programar quando ele liga.' : 'Ligue o ar para programar quando ele desliga.';
+}
+
+function renderStats(e) {
+  const dl = $('x-stats');
+  const items = [];
+  if (e.air) {
+    for (const key of ['total', 'pm25', 'pm10', 'pm1', 'humidity', 'odor']) {
+      const v = e.air[key];
+      if (v == null) continue;
+      const text = typeof v === 'number' ? (key === 'humidity' ? `${v}%` : `${v} µg/m³`) : LEVELS[v] || titleCase(String(v));
+      items.push([AIR_LABELS[key], text]);
+    }
+  }
+  if (e.filter) items.push(['Filtro', `${e.filter.percent}%`, e.filter.percent]);
+
+  dl.replaceChildren(
+    ...items.map(([label, text, percent]) => {
+      const div = document.createElement('div');
+      const dt = document.createElement('dt');
+      const dd = document.createElement('dd');
+      dt.textContent = label;
+      dd.textContent = text;
+      div.append(dt, dd);
+      if (percent !== undefined) {
+        div.className = `stat-filter${percent <= FILTER_WARN ? ' warn' : ''}`;
+        const meter = document.createElement('span');
+        meter.className = 'meter';
+        const fill = document.createElement('i');
+        fill.style.width = `${percent}%`;
+        meter.appendChild(fill);
+        div.appendChild(meter);
+        if (percent <= FILTER_WARN) {
+          const tip = document.createElement('p');
+          tip.className = 'x-note';
+          tip.textContent = 'Hora de limpar ou trocar o filtro.';
+          div.appendChild(tip);
+        }
+      }
+      return div;
+    }),
+  );
+  if (items.length === 0 && !$('x-air').hidden) {
+    const p = document.createElement('p');
+    p.className = 'x-note';
+    p.textContent = 'Sem leitura no momento.';
+    dl.appendChild(p);
+  }
+}
+
+function extraMessage(feature, value) {
+  const onOff = value ? 'ligada' : 'desligada';
+  switch (feature) {
+    case 'swingV': return `Oscilação vertical ${onOff}`;
+    case 'swingH': return `Oscilação horizontal ${onOff}`;
+    case 'powerSave': return `Modo econômico ${value ? 'ligado' : 'desligado'}`;
+    case 'airClean': return `Purificação ${onOff}`;
+    case 'light': return `Luz do painel: ${(LIGHT[value] || titleCase(String(value))).toLowerCase()}`;
+    case 'twoSetHeat': return `Aquece abaixo de ${fmt(value)}°`;
+    case 'twoSetCool': return `Resfria acima de ${fmt(value)}°`;
+    default: {
+      const t = TIMERS.find((tt) => tt.feature === feature);
+      if (!t) return 'Comando enviado';
+      if (value === 0 || value === null) return 'Timer cancelado';
+      return `${timerText(t, value)}`;
+    }
+  }
+}
+
+function setExtra(feature, value) {
+  let patch;
+  if (feature === 'twoSetHeat' || feature === 'twoSetCool') {
+    const side = feature === 'twoSetHeat' ? 'heat' : 'cool';
+    patch = { twoSet: { ...extras().twoSet, [side]: value } };
+  } else {
+    // Timer relativo em 0 significa cancelar.
+    patch = { [feature]: value === 0 ? null : value };
+  }
+  act({ extras: { ...extras(), ...patch } }, () => api.set(S.deviceId, feature, value, S.ac.unit), extraMessage(feature, value));
+}
+
+function openExtras() {
+  if (!xcaps().any) return;
+  $('extras').hidden = false;
+  renderExtras();
+  setTimeout(() => $('close-extras').focus(), 50);
+}
+
+function closeExtras() {
+  $('extras').hidden = true;
+}
+
+function bindExtras() {
+  $('open-extras').addEventListener('click', openExtras);
+  $('close-extras').addEventListener('click', closeExtras);
+  $('chips').addEventListener('click', (e) => e.target.closest('.chip') && openExtras());
+  $('extras').addEventListener('click', (e) => e.target === e.currentTarget && closeExtras());
+
+  $('extras').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.disabled || !S.ac) return;
+
+    if (b.classList.contains('toggle')) return setExtra(b.dataset.feature, !extras()[b.dataset.feature]);
+
+    if (b.closest('#x-light')) {
+      const v = xcaps().light.find((l) => String(l) === b.dataset.value);
+      if (v !== undefined && v !== extras().light) setExtra('light', v);
+      return;
+    }
+
+    const range = b.closest('.range-row');
+    if (range) {
+      const side = range.dataset.side;
+      const r = xcaps().twoSet[side];
+      const cur = extras().twoSet?.[side];
+      if (typeof cur !== 'number') return;
+      const next = Math.min(r.max, Math.max(r.min, cur + Number(b.dataset.dir) * r.step));
+      if (next !== cur) setExtra(side === 'heat' ? 'twoSetHeat' : 'twoSetCool', next);
+      return;
+    }
+
+    const row = b.closest('.timer-row');
+    if (!row) return;
+    const t = TIMERS.find((tt) => tt.feature === row.dataset.feature);
+    if (b.dataset.minutes) return setExtra(t.feature, Number(b.dataset.minutes));
+    if ('cancel' in b.dataset) return setExtra(t.feature, t.kind === 'relative' ? 0 : null);
+    if ('alarm' in b.dataset) {
+      const input = row.querySelector('input');
+      if (!input.value) {
+        input.focus();
+        return setStatus('Escolha um horário.', true);
+      }
+      setExtra(t.feature, input.value);
+    }
+  });
 }
 
 function buildSegments() {
@@ -355,6 +675,7 @@ async function openDevice(id) {
   S.pendingTemp = null;
   ticksFor = '';
   buildSegments();
+  buildExtras();
   setView('ready');
   render();
   stamp();
@@ -426,6 +747,9 @@ async function removeToken() {
   clearInterval(S.pollTimer);
   S.config = { ...S.config, hasToken: false, deviceId: null };
   S.ac = null;
+  $('open-extras').hidden = true;
+  $('chips').hidden = true;
+  closeExtras();
   fillDevices([]);
   showEmpty('Conecte sua conta LG', 'Salve um token para controlar seu ar-condicionado.');
   setStatus('Sem token');
@@ -511,7 +835,12 @@ function bindEvents() {
   $('remove-token').addEventListener('click', removeToken);
   $('open-pat').addEventListener('click', () => api.openTokenPage());
   $('sheet').addEventListener('click', (e) => e.target === e.currentTarget && closeSettings());
-  document.addEventListener('keydown', (e) => e.key === 'Escape' && !$('sheet').hidden && closeSettings());
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!$('sheet').hidden) closeSettings();
+    else if (!$('extras').hidden) closeExtras();
+  });
+  bindExtras();
 
   window.addEventListener('focus', () => S.deviceId && refresh());
 }

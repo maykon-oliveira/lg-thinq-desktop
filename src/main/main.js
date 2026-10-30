@@ -1,3 +1,4 @@
+const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserWindow, ipcMain, nativeTheme, safeStorage, shell } = require('electron');
 const { ThinQClient, ThinQError, friendlyMessage } = require('./thinq');
@@ -84,6 +85,17 @@ async function stateFor(id) {
   return ac.parseState(await getClient().getState(id), caps);
 }
 
+// Em modo dev, guarda profile e estado brutos para conferir formatos da API.
+async function dumpDebug(id) {
+  const c = getClient();
+  const [profile, state] = await Promise.all([c.getProfile(id), c.getState(id)]);
+  const dir = path.join(app.getPath('userData'), 'debug');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${String(id).replace(/[^\w-]/g, '_')}.json`);
+  fs.writeFileSync(file, JSON.stringify({ profile, state }, null, 2));
+  console.log(`[dev] profile e estado salvos em ${file}`);
+}
+
 function registerIpc() {
   handle('config:get', () => ({
     demo: DEMO,
@@ -119,6 +131,7 @@ function registerIpc() {
   });
 
   handle('ac:load', async (id) => {
+    if (DEV) dumpDebug(id).catch((err) => console.warn('[dev] falha ao salvar o profile:', err.message));
     const caps = await capsFor(id);
     return { caps, state: await stateFor(id) };
   });
@@ -145,7 +158,12 @@ function registerIpc() {
     return true;
   });
 
-  handle('open:pat', () => shell.openExternal(PAT_URL));
+  handle('ac:set', async (id, feature, value, unit) => {
+    await getClient().control(id, ac.extraPayload(await capsFor(id), feature, value, unit));
+    return true;
+  });
+
+  handle('open:pat',() => shell.openExternal(PAT_URL));
 }
 
 app.whenReady().then(() => {

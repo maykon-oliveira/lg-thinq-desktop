@@ -17,5 +17,6 @@ contextBridge.exposeInMainWorld('thinq', {
   setMode: (id, mode) => call('ac:mode', id, mode),
   setFan: (id, fan) => call('ac:fan', id, fan),
   setTemp: (id, mode, value, unit) => call('ac:temp', id, mode, value, unit),
+  set: (id, feature, value, unit) => call('ac:set', id, feature, value, unit),
   openTokenPage: () => call('open:pat'),
 });

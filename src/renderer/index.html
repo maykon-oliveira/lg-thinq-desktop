@@ -55,6 +55,7 @@
       <fieldset class="segmented" id="fans">
         <legend>Ventilação</legend>
       </fieldset>
+      <div class="chips" id="chips" hidden></div>
     </section>
 
     <section class="empty" id="empty" hidden>
@@ -67,6 +68,9 @@
   <footer class="statusbar">
     <p id="status" role="status" aria-live="polite">Conectando…</p>
     <div class="status-actions">
+      <button class="icon-btn" id="open-extras" aria-label="Ajustes" title="Ajustes" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+      </button>
       <button class="icon-btn" id="refresh" aria-label="Atualizar agora" title="Atualizar agora">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg>
       </button>
@@ -111,6 +115,59 @@
         <button type="submit" class="btn" id="save-settings">Conectar</button>
       </div>
     </form>
+  </div>
+
+  <div class="sheet-backdrop" id="extras" hidden>
+    <div class="sheet sheet-extras" role="dialog" aria-modal="true" aria-labelledby="extras-title">
+      <div class="sheet-head">
+        <h2 id="extras-title">Ajustes</h2>
+        <button type="button" class="icon-btn" id="close-extras" aria-label="Fechar" title="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <section class="x-section" id="x-air" hidden>
+        <h3>Ar e filtro</h3>
+        <dl class="stats" id="x-stats"></dl>
+      </section>
+
+      <section class="x-section" id="x-wind" hidden>
+        <h3>Vento</h3>
+        <button type="button" class="toggle" data-feature="swingV" aria-pressed="false"><span>Oscilar na vertical</span><i aria-hidden="true"></i></button>
+        <button type="button" class="toggle" data-feature="swingH" aria-pressed="false"><span>Oscilar na horizontal</span><i aria-hidden="true"></i></button>
+      </section>
+
+      <section class="x-section" id="x-options" hidden>
+        <h3>Opções</h3>
+        <button type="button" class="toggle" data-feature="powerSave" aria-pressed="false"><span>Modo econômico</span><i aria-hidden="true"></i></button>
+        <button type="button" class="toggle" data-feature="airClean" aria-pressed="false"><span>Purificação do ar</span><i aria-hidden="true"></i></button>
+        <fieldset class="segmented" id="x-light">
+          <legend>Luz do painel</legend>
+        </fieldset>
+      </section>
+
+      <section class="x-section" id="x-twoset" hidden>
+        <h3>Faixa automática</h3>
+        <div class="range-row" data-side="heat">
+          <span>Aquece abaixo de</span>
+          <button type="button" class="mini-step" data-dir="-1" aria-label="Diminuir">−</button>
+          <output>--</output>
+          <button type="button" class="mini-step" data-dir="1" aria-label="Aumentar">+</button>
+        </div>
+        <div class="range-row" data-side="cool">
+          <span>Resfria acima de</span>
+          <button type="button" class="mini-step" data-dir="-1" aria-label="Diminuir">−</button>
+          <output>--</output>
+          <button type="button" class="mini-step" data-dir="1" aria-label="Aumentar">+</button>
+        </div>
+      </section>
+
+      <section class="x-section" id="x-timers" hidden>
+        <h3>Timer</h3>
+        <div id="x-timer-list"></div>
+        <p class="x-note" id="x-timer-note" hidden></p>
+      </section>
+    </div>
   </div>
 
   <script src="app.js"></script>
