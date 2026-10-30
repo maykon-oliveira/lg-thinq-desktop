@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:">
+  <title>Brisa</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="loading" data-mode="COOL">
+  <header class="titlebar">
+    <div class="device">
+      <label class="visually-hidden" for="device-select">Aparelho</label>
+      <select id="device-select" disabled>
+        <option>Conectando…</option>
+      </select>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="dial-wrap" aria-label="Temperatura">
+      <div class="dial" id="dial" role="slider" tabindex="0"
+           aria-label="Temperatura desejada" aria-valuemin="18" aria-valuemax="30" aria-valuenow="23">
+        <svg viewBox="0 0 300 300" aria-hidden="true">
+          <g id="ticks"></g>
+          <path id="arc-track" class="arc-track" />
+          <path id="arc-value" class="arc-value" />
+          <circle id="ambient-dot" class="ambient-dot" r="5" />
+          <circle id="thumb" class="thumb" r="13" />
+        </svg>
+        <div class="readout">
+          <p class="readout-state" id="readout-state">Desejada</p>
+          <p class="readout-temp"><span id="target">--</span><span class="unit">°</span></p>
+          <p class="readout-room" id="room">Ambiente --</p>
+        </div>
+      </div>
+
+      <div class="primary">
+        <button class="step" id="temp-down" aria-label="Diminuir temperatura">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button class="power" id="power" aria-pressed="false" aria-label="Ligar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>
+        </button>
+        <button class="step" id="temp-up" aria-label="Aumentar temperatura">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="controls">
+      <fieldset class="segmented" id="modes">
+        <legend>Modo</legend>
+      </fieldset>
+      <fieldset class="segmented" id="fans">
+        <legend>Ventilação</legend>
+      </fieldset>
+    </section>
+
+    <section class="empty" id="empty" hidden>
+      <h2 id="empty-title">Nenhum ar-condicionado encontrado</h2>
+      <p id="empty-text">Confira se ele aparece no app LG ThinQ do celular com a mesma conta do token.</p>
+      <button class="btn" id="empty-retry">Tentar de novo</button>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <p id="status" role="status" aria-live="polite">Conectando…</p>
+    <div class="status-actions">
+      <button class="icon-btn" id="refresh" aria-label="Atualizar agora" title="Atualizar agora">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg>
+      </button>
+      <button class="icon-btn" id="open-settings" aria-label="Configurações" title="Configurações">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <div class="sheet-backdrop" id="sheet" hidden>
+    <form class="sheet" id="settings-form" aria-labelledby="sheet-title" novalidate>
+      <h2 id="sheet-title">Conecte sua conta LG</h2>
+      <p class="sheet-lede">O Brisa usa a API oficial da LG. Ela pede um token pessoal, gerado uma vez com a mesma conta do app ThinQ.</p>
+
+      <ol class="steps">
+        <li>
+          Abra a página de tokens e entre com sua conta LG.
+          <button type="button" class="link" id="open-pat">Abrir connect-pat.lgthinq.com</button>
+        </li>
+        <li>Crie um token marcando as três permissões: ver aparelhos, ver status e controlar aparelhos.</li>
+        <li>Copie o valor do token e cole abaixo.</li>
+      </ol>
+
+      <label class="field">
+        <span>Token pessoal (PAT)</span>
+        <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Cole o token aqui">
+      </label>
+
+      <label class="field field-short">
+        <span>País da conta</span>
+        <input id="country" maxlength="2" autocomplete="off" spellcheck="false" value="BR">
+        <small>Código de duas letras, como BR, PT ou US.</small>
+      </label>
+
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <p class="form-note" id="form-note">O token fica salvo só neste computador, criptografado pelo sistema.</p>
+
+      <div class="sheet-actions">
+        <button type="button" class="link danger" id="remove-token" hidden>Remover token</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="close-settings" hidden>Cancelar</button>
+        <button type="submit" class="btn" id="save-settings">Conectar</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

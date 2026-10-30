@@ -1,0 +1,55 @@
+{
+  "name": "brisa",
+  "productName": "Brisa",
+  "version": "0.1.0",
+  "description": "Controle seu ar-condicionado LG ThinQ pelo computador, em uma única tela.",
+  "main": "src/main/main.js",
+  "author": "Maykon",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "demo": "electron . --demo",
+    "test": "node --test",
+    "dist": "electron-builder --win",
+    "dist:all": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^45.2.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "io.github.brisa.app",
+    "productName": "Brisa",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "icon": "assets/icon.png",
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "shortcutName": "Brisa"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility"
+    },
+    "publish": {
+      "provider": "github"
+    }
+  }
+}
