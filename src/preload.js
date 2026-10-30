@@ -4,7 +4,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const call = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 
-contextBridge.exposeInMainWorld('brisa', {
+contextBridge.exposeInMainWorld('thinq', {
   platform: process.platform,
   getConfig: () => call('config:get'),
   saveConfig: (cfg) => call('config:save', cfg),

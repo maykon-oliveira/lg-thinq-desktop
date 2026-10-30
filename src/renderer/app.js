@@ -1,6 +1,6 @@
 'use strict';
 
-const api = window.brisa;
+const api = window.thinq;
 const $ = (id) => document.getElementById(id);
 const body = document.body;
 

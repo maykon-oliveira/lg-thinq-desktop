@@ -1,6 +1,6 @@
 {
-  "name": "brisa",
-  "productName": "Brisa",
+  "name": "lg-thinq-desktop",
+  "productName": "LG ThinQ Desktop",
   "version": "0.1.0",
   "description": "Controle seu ar-condicionado LG ThinQ pelo computador, em uma única tela.",
   "main": "src/main/main.js",
@@ -19,8 +19,8 @@
     "electron-builder": "^26.18.0"
   },
   "build": {
-    "appId": "io.github.brisa.app",
-    "productName": "Brisa",
+    "appId": "io.github.lg-thinq-desktop",
+    "productName": "LG ThinQ Desktop",
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -38,7 +38,7 @@
     },
     "nsis": {
       "oneClick": true,
-      "shortcutName": "Brisa"
+      "shortcutName": "LG ThinQ Desktop"
     },
     "mac": {
       "target": "dmg",

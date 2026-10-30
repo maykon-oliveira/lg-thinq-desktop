@@ -1,8 +1,8 @@
-# Brisa
+# LG ThinQ Desktop
 
 Controle seu ar-condicionado LG ThinQ pelo computador, em uma única tela.
 
-O Brisa é um app de desktop (Windows, macOS e Linux) que liga e desliga o ar, ajusta a temperatura, troca o modo e a ventilação. Ele usa a **API oficial da LG (ThinQ Connect)**, a mesma usada pela integração do Home Assistant.
+O LG ThinQ Desktop é um app de desktop (Windows, macOS e Linux) que liga e desliga o ar, ajusta a temperatura, troca o modo e a ventilação. Ele usa a **API oficial da LG (ThinQ Connect)**, a mesma usada pela integração do Home Assistant.
 
 <p>
   <img src="docs/tela-frio.png" width="300" alt="Tela principal no modo frio">
@@ -25,7 +25,7 @@ Os modos e velocidades que aparecem vêm do próprio aparelho, então a tela se 
 1. O ar-condicionado precisa estar conectado no app **LG ThinQ** do celular. Se ele já funciona lá, está pronto.
 2. Gere um **token pessoal (PAT)**:
    - Acesse [connect-pat.lgthinq.com](https://connect-pat.lgthinq.com) e entre com a **mesma conta LG** do app.
-   - Clique em **Add New Token**, dê um nome (ex.: `brisa`) e marque as três permissões: ver aparelhos, ver status e controlar aparelhos.
+   - Clique em **Add New Token**, dê um nome (ex.: `desktop`) e marque as três permissões: ver aparelhos, ver status e controlar aparelhos.
    - Copie o valor do token.
 
 O app pede o token na primeira vez que abre. Ele fica salvo só no seu computador, criptografado pelo sistema (DPAPI no Windows, Keychain no macOS).

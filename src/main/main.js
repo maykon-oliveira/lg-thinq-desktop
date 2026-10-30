@@ -28,7 +28,7 @@ function createWindow() {
     minWidth: 360,
     minHeight: 600,
     show: false,
-    title: 'Brisa',
+    title: 'LG ThinQ Desktop',
     icon: path.join(__dirname, '../../assets/icon.png'),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#141B22' : '#E6ECEF',
     titleBarStyle: 'hidden',
